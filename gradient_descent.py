@@ -3,19 +3,20 @@ import numpy as np
 
 class GradientDescent(object):
 
-    def __init__(self, X, y,
-                model='linear',
-                augment_design_matrix=False
-                ):
-        """
-        parameters
+    def __init__(self, X, y, model='linear', augment_design_matrix=False):
+        """Estimate model parameters by convex optimization with gradient descent.
+
+        Parameters
         ----------
         X: matrix of covariates
         y: vector of targets / labels
-        cost_funciton: differentiable cost function, e.g linear
-        augment_design_matrix: add column vector of ones to design matrix to allow for intercept
-        has_intercept: flag for internal use. True if X has been augmented.
-        beta: estimated parameters. initialized with a random guess.
+        model: linear or logi regression
+        augment_design_matrix: add column vector of ones to design matrix
+            to allow for intercept
+
+        Returns
+        -------
+        Instantiated model object.
         """
         self.y = y
         self.X = self._augment_design_matrix(X) if augment_design_matrix else X
@@ -23,7 +24,6 @@ class GradientDescent(object):
         self.model_type = model
         self.beta = self._random_guess()
         self._init_cost_functions()
-
 
     def _init_cost_functions(self):
         if self.model_type == 'linear':
@@ -36,12 +36,12 @@ class GradientDescent(object):
             self.predict = self._logistic_predict
         else:
             raise ValueError(
-            '''choose a linear model type:
-            linear (regression) or logistic (classification)
-            ''')
+                '''choose a linear model type:
+                linear (regression) or logistic (classification)
+                ''')
 
     def _augment_design_matrix(self, X):
-        column_vector_of_ones = np.ones(len(X)).reshape(-1,1)
+        column_vector_of_ones = np.ones(len(X)).reshape(-1, 1)
         X_augmented = np.hstack((column_vector_of_ones, X))
         return X_augmented
 
@@ -61,9 +61,8 @@ class GradientDescent(object):
         return -X.T.dot(self.y - y_hat)
 
     def _logistic_predict(self, X):
-        '''
-        The expit function, also known as the logistic function,
-        is defined as expit(x) = 1/(1+exp(-x)). It is the inverse of the logit function.
+        '''the logistic function is defined as h(x) = 1/(1+exp(-x)).
+        It is the inverse of the logit function.
         '''
         regression = X.dot(self.beta)
         p = 1 / (1 + np.exp(-regression))
@@ -74,7 +73,7 @@ class GradientDescent(object):
         cost_vector = -self.y * np.log(p) - (1 - self.y) * np.log(1 - p)
         ridge_penalty = regularization * np.sum(self.beta**2)
         if self.has_intercept:
-            ridge_penalty -= self.beta[0]**2 # don't penalize intercept
+            ridge_penalty -= self.beta[0]**2  # don't penalize intercept
         return cost_vector.sum() + ridge_penalty
 
     def _log_loss_gradient(self, X, regularization=0.0):
@@ -82,28 +81,30 @@ class GradientDescent(object):
         cost_gradient = -X.T.dot(self.y - p)
         ridge_gradient = regularization * (2 * self.beta)
         if self.has_intercept:
-            ridge_gradient[0] = 0.0 # don't penalize the intercept
+            ridge_gradient[0] = 0.0  # don't penalize the intercept
         return cost_gradient + ridge_gradient
 
     def _paramater_update(self, gradient, lr, verbose=False):
         self.beta -= lr * gradient
         if verbose:
-            print ("    updated parameters: {}".format(self.beta))
+            print("    updated parameters: {}".format(self.beta))
 
     def _stopping_criteria_satisfied(self, gradient, epsilon):
         if all(abs(gradient) < epsilon):
             print("stopping criteria satified:")
-            print("    gradient {} less than epsilon {}".format(gradient, epsilon))
+            print("    gradient {} less than epsilon {}".format(
+                gradient, epsilon)
+                )
             return True
         else:
             return False
 
     def fit(self,
-        model='logistic', max_iter=10000, lr=0.001, epsilon=0.0000001,
-        ):
+            model='logistic', max_iter=10000, lr=0.001, epsilon=0.0000001,
+            ):
         converged = False
         for i in range(max_iter):
-            gradient =  self.cost_gradient(self.X)
+            gradient = self.cost_gradient(self.X)
             if self._stopping_criteria_satisfied(gradient, epsilon):
                 print('    converged at {} iterations'.format(i))
                 converged = True
@@ -111,13 +112,15 @@ class GradientDescent(object):
             else:
                 self._paramater_update(gradient, lr)
         if not converged:
-            print('stopping at {} iterations with estimated parameters {}'.format(i, self.beta))
+            print('stopping at {} iterations with estimated parameters {}'.
+                  format(i, self.beta))
 
     def classify(self, X, threshold=0.5):
         if self.model_type == 'logistic':
             return self.predict(X) >= threshold
         else:
-            raise ValueError('''classification only available for logistic model type''')
+            raise ValueError(
+                '''classification only available for logistic model type''')
 
 
 if __name__ == "__main__":
@@ -130,8 +133,7 @@ if __name__ == "__main__":
     from sklearn.model_selection import train_test_split
     from sklearn.metrics import accuracy_score
 
-
-    def plot_results(observed, predicted, title='observed vs predicted results'):
+    def plot_results(observed, predicted, title='observed vs predicted'):
         results = pd.DataFrame({'observed': observed, 'predicted': predicted})
         sns.stripplot(x='observed', y='predicted', data=results, jitter=True)
         plt.title(title)
@@ -143,15 +145,14 @@ if __name__ == "__main__":
     y = X.dot(true_betas)
 
     clf = LinearRegression()
-    clf.fit(X,y)
-    print ("sklearn estimated parameters: {}".format(clf.coef_.squeeze()))
+    clf.fit(X, y)
+    print("sklearn estimated parameters: {}".format(clf.coef_.squeeze()))
 
     linear = GradientDescent(X, y, model='linear')
     linear.fit(max_iter=10**5, lr=0.001)
-    print ("my estimated parameters: {}".format(linear.beta.squeeze()))
+    print("my estimated parameters: {}".format(linear.beta.squeeze()))
 
     print("--- LOGISTIC REGRESSION EXAMPLE ---")
-
     X, y = make_classification(
         n_samples=1000,
         n_features=2,
@@ -159,22 +160,22 @@ if __name__ == "__main__":
         n_redundant=0,
         n_classes=2
         )
-
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
 
     clf = LogisticRegression()
     clf.fit(X_train, y_train)
     betas = clf.coef_.squeeze()
     accuracy = accuracy_score(y_true=y_test, y_pred=clf.predict(X_test))
-    print ("sklearn estimated parameters: {}".format(betas))
-    print ("sklearn classification accuracy: {}".format(accuracy))
-
-    plot_results(observed=y_test, predicted=clf.predict_proba(X_test)[:,1], title='Sklearn')
+    print("sklearn estimated parameters: {}".format(betas))
+    print("sklearn classification accuracy: {}".format(accuracy))
+    plot_results(observed=y_test, predicted=clf.predict_proba(X_test)[:, 1],
+                 title='Sklearn')
 
     logistic = GradientDescent(X_train, y_train, model='logistic')
     logistic.fit(max_iter=10**5, lr=0.001)
     betas = logistic.beta.squeeze()
     accuracy = accuracy_score(y_true=y_test, y_pred=logistic.classify(X_test))
-    print ("my estimated parameters: {}".format(betas))
-    print ("my classification accuracy: {}".format(accuracy))
-    plot_results(observed=y_test, predicted=logistic.predict(X_test), title='Elliot')
+    print("my estimated parameters: {}".format(betas))
+    print("my classification accuracy: {}".format(accuracy))
+    plot_results(observed=y_test, predicted=logistic.predict(X_test),
+                 title='Elliot')
