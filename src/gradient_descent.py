@@ -91,7 +91,7 @@ class GradientDescent(object):
 
     def _stopping_criteria_satisfied(self, gradient, epsilon):
         if all(abs(gradient) < epsilon):
-            print("stopping criteria satified:")
+            print("    stopping criteria satified:")
             print("    gradient {} less than epsilon {}".format(
                 gradient, epsilon)
                 )
