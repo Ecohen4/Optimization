@@ -34,10 +34,10 @@ class TwoComponentGaussian():
         Assume two gaussian distributions, each defined by a mean and variance.
         """
         n = len(self.y)
-        mu1 = self.y[np.random.randint(0, n)]
-        mu2 = self.y[np.random.randint(0, n)]
-        var1 = np.random.uniform(0.5, 1.5)
-        var2 = np.random.uniform(0.5, 1.5)
+        mu1 = self.y[np.random.randint(1, n)]
+        mu2 = self.y[np.random.randint(1, n)]
+        var1 = np.random.uniform(1, np.log2(n))
+        var2 = np.random.uniform(1, np.log2(n))
         pi = 0.5
         initial_params = {
         'n': n, 'mu1': mu1, 'mu2': mu2, 'var1': var1, 'var2': var2, 'pi': pi
